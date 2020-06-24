@@ -14,14 +14,15 @@ int PE_JsonDataParse(char *pIndata,int inLen)
 	return 0;	
 }
 
-void PE_JsonFree(void)
+void PE_JsonFree(int num)
 {
-	if(pJsonTable)
+	while(pJsonTable)
 	{
 		sIdDataTable* pPrevious;
 		pPrevious=pJsonTable->pPrevious;
 		free(pJsonTable);
 		pJsonTable=pPrevious;
+		if(--num == 0) break;
 	}
 }
 
@@ -79,7 +80,7 @@ int PE_CheckRecvData(char* pInRecv,int Len)
 	{
 		if (OPER_CRCERR == PE_Sign_Check("key",g_ColData.signkey)){
 			APP_ShowTradeMsg("ÑéÖ¤Ç©Ãû´í", 5000);
-			PE_JsonFree();
+			PE_JsonFree(1);
 			return OPER_CRCERR;
 		} 
 		return 0;
@@ -105,7 +106,7 @@ int InputTotalFee(char *pTitle)
 int InputAuthcodeByCamScan(void)
 {
 	CLEAR(g_ColData.authCode);
-	if(0 > APP_CamScan('S',g_ColData.payAmount,g_ColData.authCode,10,64,20*1000)) 
+	if(0 > APP_CamScan('S',g_ColData.payAmount,g_ColData.authCode,10,sizeof(g_ColData.authCode)-1,20*1000)) 
 	{
 		return -1;
 	}

@@ -2,16 +2,18 @@
 #define _CUSTOMER_
 
 
+//#define  	HTTP_TRADE_ADDERR   			"https://pos.weixincore.com"
+//#define 	HTTP_TRADE_PORT					443	
 
-#define 	CONNECT_MYSELF							//直接连交易平台
-#define  	HTTP_TRADE_ADDERR   			"https://pos.weixincore.com"	//https://pos.weixincore.com/merchant/User/login
-#define 	HTTP_TRADE_PORT					443	
+#define  	HTTP_TRADE_ADDERR   			"http://pos.weixincore.com"
+#define 	HTTP_TRADE_PORT					80	
+
 
 #define		DEVELOPER_ID					"100001"		//developerId
 #define		TM_SIGNKEY						"ac6d97e67b444b7a43edfc9182634786"		//signKey
 
 #define	TermModel			"KNS260"			//终端型号
-#define	Version				"V2.01.004"			//软件版本 
+#define	Version				"V2.01.010"			//软件版本 
 //============中国银联
 #define	CustomerVersion		"太米-WIFI"			//客户版本
 

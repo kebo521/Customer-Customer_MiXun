@@ -19,7 +19,7 @@ typedef struct
 }pDataTable;
 
 extern int PE_JsonDataParse(char *pIndata,int inLen);
-extern void PE_JsonFree(void);
+extern void PE_JsonFree(int num);
 extern char* PE_GetRecvIdPar(char* pPostID);
 extern int PE_CheckRecvIdPar(char* pPostID,char *pCheck);
 extern	int PE_ReadRecvIdPar(char* pPostID,char *pOutData);

@@ -132,7 +132,7 @@ int APP_WIFIFunction(char* title)
 
 int SetUserID(char* title)
 {
-	if(APP_InputAbc(title,"设置操作员",  STR_PRESS_NUBER_KEYS_ENTER, Term_Par.userCode[0],0, sizeof(Term_Par.userCode[0])-1)==0)
+	if(APP_InputAbc(title,"设置操作员", "按[+]键切换输入法", Term_Par.userCode[0],0, sizeof(Term_Par.userCode[0])-1)==0)
 	{
 		API_strcpy(g_ColData.userCode, Term_Par.userCode[0]);
         Par_Set(Term_Par.userCode[0], sizeof(Term_Par.userCode[0]));
@@ -142,7 +142,7 @@ int SetUserID(char* title)
 
 int SetShopID(char* title)
 {
-	if(APP_InputAbc(title,"请输入门店编号",  STR_PRESS_NUBER_KEYS_ENTER, Term_Par.shopId,0, sizeof(Term_Par.shopId)-1)==0)
+	if(APP_InputAbc(title,"请输入门店编号", "按[+]键切换输入法", Term_Par.shopId,0, sizeof(Term_Par.shopId)-1)==0)
 	{
 		API_strcpy(g_ColData.shopId, Term_Par.shopId);
         Par_Set(Term_Par.shopId, sizeof(Term_Par.shopId));
@@ -170,6 +170,11 @@ int APP_TermType(char* pTitle)
 }
 
 
+int APP_InMaster(char*  ptitle)
+{
+	return EVENT_QUIT;
+}
+
 int APP_TermMenu(char* title)
 {
 	CMenuItemStru MenuStruPar[]=
@@ -181,6 +186,7 @@ int APP_TermMenu(char* title)
 		"WIFI功能",				APP_WIFIFunction,
 		"设备信息",				SoftInfo,
 		"检查更新",				pSdkFun->app->NetInstallAPP,
+		"进入主控",				APP_InMaster,
 	};
 	return APP_CreateNewMenuByStruct(title,sizeof(MenuStruPar)/sizeof(CMenuItemStru),MenuStruPar,30*1000);
 }
@@ -196,7 +202,8 @@ int APP_TradeMainMenu(char* title)
 		"退款",			RefundFlow,
 		"核销",			ConsumeCard,
 		"交班",			ShiftMenu,
-	//	"JSON测试", 			TEST_JSON, 
+		"定额收款",		FixedMicroPay,
+	//	"JSON测试", 	TEST_JSON, 
 	};
 	APP_CreateNewMenuByStruct(title,sizeof(MenuStruPar)/sizeof(CMenuItemStru),MenuStruPar,-1);//30*1000
 	APP_AddCurrentMenuOtherFun(MENU_BACK_MAP,NULL,"taimi.clz");
@@ -208,12 +215,19 @@ int APP_TradeMainMenu(char* title)
 int customer_MainMenu(char* title)
 {
 	// 关闭公共区自动提示
+	int ret;
 	TCP_SetInterNotDisplay(TRUE);	
-	UI_SetMenuItem(5);
-	//for(;;)
+	UI_SetMenuItem(6);
+	for(;;)
 	{
 		APP_TradeMainMenu(title);
-		if(EVENT_QUIT&APP_ShowMenuProsse()) return EVENT_QUIT;
+		ret = APP_ShowMenuProsse();
+		if(EVENT_QUIT&ret)
+		{
+			if(ret&EVENT_INDEX)
+				return EVENT_QUIT;
+			else
+				return 0;
+		}
 	}
-	return 0;
 }

@@ -19,7 +19,7 @@ extern   DfFlow_Link  pFlow;
 #define    PE_pSend 			pFlow.pSendCurr
 #define    PE_pMD5 				pFlow.pMd5SCurr
 #define    PE_sLenStart 		pFlow.pSendLen
-#define    BufSize				2048
+#define    BufSize				(4096)
 
 
 typedef struct
@@ -31,6 +31,7 @@ typedef struct
 	char	sn[32];			// 终端sn号  
 	char	shopId[12+1];		//门店Id
 	char	userCode[12+1];		// 门店员工账号Id  
+	char	FixedAmount[12+1];	//支付金额，单位分 
 	char	payAmount[12+1];	//支付金额，单位分 
 	char	refundFee[12+1];	//退款金额，单位分，不传默认为全额退款 
 	char	payType[12+1];		//支付方式，如果不传，系统会通过authCode获取对应的支付方式 wx_pay：微信支付；ali_pay：支付宝；union_online：银联钱包；member_wallet：会员钱包；
@@ -57,6 +58,7 @@ extern void Send_add_item(char* pID,char* pData);
 #define SEND_ADD_ITEM(s) 	Send_add_item(#s,g_ColData.##s) 
 
 extern int MicroPay(char* pTitle);
+extern int FixedMicroPay(char* pTitle);
 extern  int OrderQuery(char* pTitle);
 extern	int RefundFlow(char* pTitle);
 extern	int ConsumeCard(char* pTitle);
