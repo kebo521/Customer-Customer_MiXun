@@ -6,14 +6,6 @@ QR_COL_Data  g_ColData;
 
 //static pDataTable  pItemdata;
 
-int CheckMchidIsNull()
-{
-	{	
-	    return 0;
-	}
-	//APP_ShowMsg("ÌáÊ¾","ÇëÏÈµ¼ÈëÉÌ»§ÐÅÏ¢",3000); 
-	//return 1;
-}
 void DataInit()
 {
 	if(PE_SendBuf==NULL)
@@ -23,7 +15,7 @@ void DataInit()
 	PE_pSend = PE_SendBuf;	
 	if(pFlow.pMd5Start==NULL)
 	{
-		pFlow.pMd5Start=malloc(BufSize);
+		pFlow.pMd5Start=malloc(2048);
 	}
 	PE_pMD5 = pFlow.pMd5Start;
 }
@@ -31,6 +23,19 @@ void DataFree(void)
 {
 	PE_JsonFree(0);
 }
+
+void DataEnd(void)
+{
+	if(PE_SendBuf)
+	{
+		free(PE_SendBuf); PE_SendBuf=NULL;
+	}
+	if(pFlow.pMd5Start)
+	{
+		free(pFlow.pMd5Start); pFlow.pMd5Start=NULL;
+	}
+}
+
 
 int Full_CheckRecv(char *pRecv,int ReadLen)
 {
@@ -153,14 +158,24 @@ void TradeDataPacked_end(void)
 void UpData_timestampAndNoncestr(int GenId)
 {
 	u32 timeStamp;
+	char timeMs[4];
 	ST_TIME tTime;
 	OsGetTime(&tTime);
 	Conv_DateToTimestamp(&tTime,8,&timeStamp);
 	sprintf(g_ColData.timestamp,"%d",timeStamp);
-	memcpy(g_ColData.nonceStr,g_ColData.sn+2,8);
-	sprintf(g_ColData.nonceStr+8,"%s",g_ColData.timestamp);
+	
+	timeStamp=API_TimeCurrMS();
+	timeMs[3]= '\0';
+	timeMs[2]='0'+ (timeStamp%10); 
+	timeStamp /= 10;
+	timeMs[1]='0'+ (timeStamp%10); 
+	timeStamp /= 10;
+	timeMs[0]='0'+ (timeStamp%10);
+	
+	memcpy(g_ColData.nonceStr,g_ColData.sn,8);
+	sprintf(g_ColData.nonceStr+8,"%s%s",timeMs,g_ColData.timestamp);
 	if(GenId)
-		sprintf(g_ColData.outTradeId,"%s%s",g_ColData.shopId,g_ColData.timestamp);
+		sprintf(g_ColData.outTradeId,"%s%s%s",g_ColData.sn+4,g_ColData.timestamp,timeMs);
 }
 
 
@@ -173,7 +188,7 @@ void SweepPackData_V2(void)
 	SEND_ADD_ITEM(outTradeId);
 	SEND_ADD_ITEM(payAmount);
 //	SEND_ADD_ITEM(returnContent);
-	SEND_ADD_ITEM(shopId);
+//	SEND_ADD_ITEM(shopId);
 	SEND_ADD_ITEM(sn);
 	SEND_ADD_ITEM(terminalType);
 	SEND_ADD_ITEM(timestamp);
@@ -211,7 +226,7 @@ void PackData_refund(void)
 	SEND_ADD_ITEM(developerId);
 	SEND_ADD_ITEM(nonceStr);
 
-	if(g_ColData.terminalType[0] == '2')
+//	if(g_ColData.terminalType[0] == '2')
 	{
 		//SEND_ADD_ITEM(outTradeId);
 		SEND_ADD_ITEM(refundFee);
@@ -222,6 +237,7 @@ void PackData_refund(void)
 		SEND_ADD_ITEM(tradeId);
 		SEND_ADD_ITEM(transactionId);
 	}
+/*
 	else if(g_ColData.terminalType[0] == '1')
 	{
 		//SEND_ADD_ITEM(outTradeId);
@@ -234,6 +250,7 @@ void PackData_refund(void)
 		SEND_ADD_ITEM(transactionId);
 		SEND_ADD_ITEM(userCode);
 	}
+	*/
 	Send_add_end_Sign();
 }
 
@@ -258,12 +275,13 @@ void PackData_shiftStatV2(void)
 	UpData_timestampAndNoncestr(0);
 	SEND_ADD_ITEM(developerId);
 	SEND_ADD_ITEM(nonceStr);
-	if(g_ColData.terminalType[0] == '2')
+	//if(g_ColData.terminalType[0] == '2')
 	{
 		SEND_ADD_ITEM(sn);
 		SEND_ADD_ITEM(terminalType);
 		SEND_ADD_ITEM(timestamp);
 	}
+	/*
 	else if(g_ColData.terminalType[0] == '1')
 	{
 		SEND_ADD_ITEM(shopId);
@@ -271,6 +289,7 @@ void PackData_shiftStatV2(void)
 		SEND_ADD_ITEM(timestamp);
 		SEND_ADD_ITEM(userCode);
 	}
+	*/
 	Send_add_end_Sign();
 }
 
@@ -281,12 +300,13 @@ void PackData_shiftRecordV2(void)
 	SEND_ADD_ITEM(developerId);
 	SEND_ADD_ITEM(nonceStr);
 	SEND_ADD_ITEM(nowPage);
-	if(g_ColData.terminalType[0] == '2')
+	//if(g_ColData.terminalType[0] == '2')
 	{
 		SEND_ADD_ITEM(sn);
 		SEND_ADD_ITEM(terminalType);
 		SEND_ADD_ITEM(timestamp);
 	}
+	/*
 	else if(g_ColData.terminalType[0] == '1')
 	{
 		SEND_ADD_ITEM(shopId);
@@ -294,6 +314,7 @@ void PackData_shiftRecordV2(void)
 		SEND_ADD_ITEM(timestamp);
 		SEND_ADD_ITEM(userCode);
 	}
+	*/
 	Send_add_end_Sign();
 }
 
@@ -303,12 +324,13 @@ void PackData_shiftConfirm(void)
 	SEND_ADD_ITEM(developerId);
 	SEND_ADD_ITEM(nonceStr);
 	SEND_ADD_ITEM(recordId);
-	if(g_ColData.terminalType[0] == '2')
+	//if(g_ColData.terminalType[0] == '2')
 	{
 		SEND_ADD_ITEM(sn);
 		SEND_ADD_ITEM(terminalType);
 		SEND_ADD_ITEM(timestamp);
 	}
+	/*
 	else if(g_ColData.terminalType[0] == '1')
 	{
 		SEND_ADD_ITEM(shopId);
@@ -316,6 +338,7 @@ void PackData_shiftConfirm(void)
 		SEND_ADD_ITEM(timestamp);
 		SEND_ADD_ITEM(userCode);
 	}
+	*/
 	Send_add_end_Sign();
 }
 
@@ -354,7 +377,7 @@ int PE_ShowQRcodeDis(char* pQRcode)
 void PE_ShowfailMsg(char* pCode)
 {
 	char codeInfo[32]={0};
-	char GbkMsg[128]={0};
+	char GbkMsg[256]={0};
 	API_sprintf(codeInfo,"Ó¦´ðÂë[%s]",pCode);
 	API_Utf8ToGbk(GbkMsg,sizeof(GbkMsg),PE_GetRecvIdPar("errMsg"));
 	PE_ShowMsg("ÌáÊ¾",codeInfo,GbkMsg,NULL,10*1000);
@@ -370,7 +393,6 @@ int inside_OrderQuery(int PeekLink)
 		ret = Tcp_Link("Á¬½ÓÖÐÐÄ..");
 		if(ret) return ret;
 	}
-	PE_JsonFree(1);
 	// ×é½¨Êý¾Ý°ü,·¢ËÍÇëÇó
 	TradeDataPacked_start(HTTP_TRADE_ADDERR"/open/Pay/orderQuery");
 	PackData_OrderQuery();
@@ -383,13 +405,16 @@ int inside_OrderQuery(int PeekLink)
 
 void inside_MicroPay(int Errtimes)
 {
+	int ret;
 	char *pCode;
 	// ×é½¨Êý¾Ý°ü,·¢ËÍÇëÇó
 	TradeDataPacked_start(HTTP_TRADE_ADDERR"/open/Pay/microPayV2");
 	SweepPackData_V2();
 	TradeDataPacked_end();
 	// ·¢ËÍ½ÓÊÕÊý¾Ý
-	if(Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv)) return;
+	ret = Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv);
+	Tcp_Close(NULL);
+	if(ret) return;
 RE_QUERY_ADDER:
 	pCode=PE_GetRecvIdPar("errCode");
 	if(pCode==NULL)
@@ -402,65 +427,67 @@ RE_QUERY_ADDER:
 	{
 		char *tradeInfo;
 		tradeInfo = PE_GetRecvIdPar("tradeInfo");
-		if(tradeInfo)
+		if(tradeInfo!= NULL && 0==PE_JsonDataParse(tradeInfo,API_strlen(tradeInfo)))
 		{
-			if(!PE_JsonDataParse(tradeInfo,API_strlen(tradeInfo)))
+			char *payStatus;
+			payStatus = PE_GetRecvIdPar("payStatus");
+			if(payStatus == NULL)
 			{
-				char *payStatus;
-				int ret;
-				payStatus = PE_GetRecvIdPar("payStatus");
-				if(API_strcmp(payStatus,"SUCCESS")==0)
-				{
-					PE_ReadRecvIdPar("incomeAmount",g_ColData.payAmount);
-					SuccessTradeProcess();	
-				}
-				else if(API_strcmp(payStatus,"CLOSE")==0)
-				{
-					APP_ShowTradeMsg("¶©µ¥ÒÑ¹Ø±Õ",10000);
-				}
-				else if(API_strcmp(payStatus,"PAYERROR")==0)
-				{
-					APP_ShowTradeFA("Ö§¸¶Ê§°Ü",10000);
-				}
-				else if(API_strcmp(payStatus,"NOTPAY")==0)
-				{
-					APP_ShowTradeMsg("Î´Ö§¸¶",10000);
-				}
-				else if(API_strcmp(payStatus,"REVOKED")==0)
-				{
-					APP_ShowTradeMsg("¶©µ¥ÒÑ³·Ïú",10000);
-				}
-				else if(API_strcmp(payStatus,"USERPAYING")==0)
-				{
-					Tcp_Close(NULL);
-					PE_ReadRecvIdPar("tradeId",g_ColData.tradeId);
-					PE_ReadRecvIdPar("outTradeId",g_ColData.outTradeId);
-					PE_JsonFree(1);
-					if(EVENT_CANCEL == API_WaitEvent(2*1000,EVENT_UI,EVENT_NONE))
-					{
-						return;
-					}
-					APP_SetKeyAccept(0x01);
-					ret = inside_OrderQuery(0);
-					if(ret == OPER_RET)
-					{
-						return;
-					}
-					else if(ret)
-					{
-						APP_ShowTradeMsg("¶©µ¥Ö§¸¶ÖÐ,ÉÔºò²éÑ¯È·ÈÏ½á¹û",10000);
-						return;
-					}
-					if(Errtimes-- <= 0)
-					{
-						APP_ShowTradeMsg("¶©µ¥Ö§¸¶ÖÐ,\n²éÑ¯½á¹û³¬Ê±\nÉÔºòÊÖ¶¯²éÑ¯È·ÈÏ½á¹û",10000);
-						return;
-					}
-					goto RE_QUERY_ADDER; 
-					
-				}
+				APP_ShowTradeMsg("ÎÞ×´Ì¬ÐÅÏ¢",10000);
 				PE_JsonFree(1);
+				return;
 			}
+			if(API_strcmp(payStatus,"SUCCESS")==0)
+			{
+				PE_ReadRecvIdPar("incomeAmount",g_ColData.payAmount);
+				SuccessTradeProcess();	
+			}
+			else if(API_strcmp(payStatus,"CLOSE")==0)
+			{
+				APP_ShowTradeMsg("¶©µ¥ÒÑ¹Ø±Õ",10000);
+			}
+			else if(API_strcmp(payStatus,"PAYERROR")==0)
+			{
+				APP_ShowTradeFA("Ö§¸¶Ê§°Ü",10000);
+			}
+			else if(API_strcmp(payStatus,"NOTPAY")==0)
+			{
+				APP_ShowTradeMsg("Î´Ö§¸¶",10000);
+			}
+			else if(API_strcmp(payStatus,"REVOKED")==0)
+			{
+				APP_ShowTradeMsg("¶©µ¥ÒÑ³·Ïú",10000);
+			}
+			else if(API_strcmp(payStatus,"USERPAYING")==0)
+			{
+				PE_ReadRecvIdPar("tradeId",g_ColData.tradeId);
+				PE_ReadRecvIdPar("outTradeId",g_ColData.outTradeId);
+				PE_JsonFree(1);
+				if(EVENT_CANCEL == API_WaitEvent(2*1000,EVENT_UI,EVENT_NONE))
+				{
+					return;
+				}
+				APP_SetKeyAccept(0x01);
+				PE_JsonFree(1);
+				ret = inside_OrderQuery(0);
+				if(ret == OPER_RET)
+				{
+					return;
+				}
+				else if(ret)
+				{
+					APP_ShowTradeMsg("¶©µ¥Ö§¸¶ÖÐ,ÉÔºò²éÑ¯È·ÈÏ½á¹û",10000);
+					return;
+				}
+				if(Errtimes-- <= 0)
+				{
+					APP_ShowTradeMsg("¶©µ¥Ö§¸¶ÖÐ,\n²éÑ¯½á¹û³¬Ê±\nÉÔºòÊÖ¶¯²éÑ¯È·ÈÏ½á¹û",10000);
+					return;
+				}
+				goto RE_QUERY_ADDER; 
+				
+			}
+			PE_JsonFree(1);
 		}
 		//pSdkFun->net->KeyAccept(0x00);
 	}
@@ -473,7 +500,6 @@ RE_QUERY_ADDER:
 int MicroPay(char* title)
 {    
 	do{
-		if(CheckMchidIsNull())return -1;
 		TCP_SetInterNotDisplay(FALSE);
 		if(Tcp_PeekLink()) //Tcp_Link(NULL);
 			return -2;
@@ -503,7 +529,6 @@ int FixedMicroPay(char* title)
 {    
 	int ret=0;
 	do{
-		if(CheckMchidIsNull())return -1;
 		TCP_SetInterNotDisplay(FALSE);
 		if(Tcp_PeekLink()) //Tcp_Link(NULL);
 			return -2;
@@ -535,7 +560,6 @@ int OrderQuery(char* pTitle)
 	char* pCode;
 	int ret;
 	do{
-		if(CheckMchidIsNull())return -1;
 		TCP_SetInterNotDisplay(FALSE);
 		if(Tcp_PeekLink()) //Tcp_Link(NULL);
 			return -2;
@@ -547,7 +571,7 @@ int OrderQuery(char* pTitle)
 		if(ret<0) break;
 		if(ret==OPER_HARD)
 		{
-		    if(APP_ScanInput(pTitle,"ÇëÊÖÊäÈë¶©µ¥ºÅ",NULL,g_ColData.transactionId,10,32)) 
+		    if(APP_ScanInput(pTitle,"ÇëÊÖ¶¯ÊäÈëÉÌ»§µ¥ºÅ",NULL,g_ColData.transactionId,10,32)) 
 				break;
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
@@ -566,152 +590,193 @@ int OrderQuery(char* pTitle)
 	    {
 			char *tradeInfo;
 			tradeInfo = PE_GetRecvIdPar("tradeInfo");
-			if(tradeInfo)
+			if(tradeInfo != NULL && 0==PE_JsonDataParse(tradeInfo,API_strlen(tradeInfo)))
 			{
-				if(!PE_JsonDataParse(tradeInfo,API_strlen(tradeInfo)))
+				char *pPar,*pShow;
+				char showBuff[1024];
+				pShow=showBuff;
+				/*
+				pPar=PE_GetRecvIdPar("shopId");
+				if(pPar)
 				{
-					char *pPar,*pShow;
-					char showBuff[512];
-					pShow=showBuff;
-					pPar=PE_GetRecvIdPar("shopId");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"ÃÅµêºÅ:%s  ",pPar);
+					pShow += sprintf(pShow,"ÃÅµê:%s  ",pPar);
+				}
+				pPar=PE_GetRecvIdPar("merchantUserId");
+				if(pPar)
+				{
+					pShow += sprintf(pShow,"ÊÕÒøÔ±:%s\n",pPar);
+				}
+				*/
+				pPar=PE_GetRecvIdPar("payStatus");
+				if(pPar)
+				{//0±íÊ¾Î´ÍË¿î£¬1±íÊ¾×ªÈëÍË¿î
+					pShow = eStrcpy(pShow,"¶©µ¥×´Ì¬:");
+					if(strstr(pPar,"SUCCESS"))
+					{//SUCCESS£º
+						pShow = eStrcpy(pShow,"Ö§¸¶³É¹¦");
 					}
-					pPar=PE_GetRecvIdPar("merchantUserId");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"µêÔ±ºÅ:%s\n",pPar);
+					else if(strstr(pPar,"NOTPAY"))
+					{//NOTPAY£ºÎ´Ö§¸¶£
+						pShow = eStrcpy(pShow,"Î´Ö§¸¶");
 					}
-					pPar=PE_GetRecvIdPar("payStatus");
-					if(pPar)
-					{//0±íÊ¾Î´ÍË¿î£¬1±íÊ¾×ªÈëÍË¿î
-						pShow = eStrcpy(pShow,"¶©µ¥×´Ì¬:");
-						if(strstr(pPar,"SUCCESS"))
-						{//SUCCESS£º
-							pShow = eStrcpy(pShow,"Ö§¸¶³É¹¦");
-						}
-						else if(strstr(pPar,"NOTPAY"))
-						{//NOTPAY£ºÎ´Ö§¸¶£
-							pShow = eStrcpy(pShow,"Î´Ö§¸¶");
-						}
-						else if(strstr(pPar,"CLOSE"))
-						{//CLOSE£ºÒÑ¹Ø±Õ
-							pShow = eStrcpy(pShow,"ÒÑ¹Ø±Õ");
-						}
-						else if(strstr(pPar,"REVOKED"))
-						{//REVOKED£ºÒÑ³·Ïú
-							pShow = eStrcpy(pShow,"ÒÑ³·Ïú");
-						}
-						else if(strstr(pPar,"USERPAYING"))
-						{//USERPAYING£ºÓÃ»§Ö§¸¶ÖÐ
-							pShow = eStrcpy(pShow,"ÓÃ»§Ö§¸¶ÖÐ");
-						}
-						else if(strstr(pPar,"PAYERROR"))
-						{//PAYERROR£ºÖ§¸¶Ê§°Ü
-							pShow = eStrcpy(pShow,"Ö§¸¶Ê§°Ü");
-						}
-						else if(strstr(pPar,"REFUND"))
-						{//REFUND£º
-							pShow = eStrcpy(pShow,"×ªÈëÍË¿î");
-						}
-						else if(strstr(pPar,"PERATE_FAIL"))
-						{//PERATE_FAIL£ºÔ¤ÊÚÈ¨ÇëÇó²Ù×÷Ê§°Ü£»
-							pShow = eStrcpy(pShow,"Ô¤ÊÚÈ¨ÇëÇó²Ù×÷Ê§°Ü");
-						}
-						else if(strstr(pPar,"OPERATE_SETTLING"))
-						{//OPERATE_SETTLING£ºÑº½ðÏû·ÑÒÑÊÜÀí£»
-							pShow = eStrcpy(pShow,"Ñº½ðÏû·ÑÒÑÊÜÀí");
-						}
-						else if(strstr(pPar,"REVOKED_SUCCESS"))
-						{//REVOKED_SUCCESS£ºÔ¤ÊÚÈ¨ÇëÇó³·Ïú³É¹¦
-							pShow = eStrcpy(pShow,"Ô¤ÊÚÈ¨ÇëÇó³·Ïú³É¹¦");
-						}
-						*pShow++ = '\n';
+					else if(strstr(pPar,"CLOSE"))
+					{//CLOSE£ºÒÑ¹Ø±Õ
+						pShow = eStrcpy(pShow,"ÒÑ¹Ø±Õ");
 					}
-					pPar=PE_GetRecvIdPar("orderAmount");
-					if(pPar)
-					{
-						char DisplayMoney[16];
-						Conv_TmoneyToDmoney(DisplayMoney,pPar);
-						pShow += sprintf(pShow,"¶©µ¥×Ü¶î:%s\n",DisplayMoney);
+					else if(strstr(pPar,"REVOKED"))
+					{//REVOKED£ºÒÑ³·Ïú
+						pShow = eStrcpy(pShow,"ÒÑ³·Ïú");
 					}
-					pPar=PE_GetRecvIdPar("incomeAmount");
-					if(pPar)
-					{
-						char DisplayMoney[16];
-						Conv_TmoneyToDmoney(DisplayMoney,pPar);
-						pShow += sprintf(pShow,"ÊµÊÕ½ð¶î:%s\n",DisplayMoney);
+					else if(strstr(pPar,"USERPAYING"))
+					{//USERPAYING£ºÓÃ»§Ö§¸¶ÖÐ
+						pShow = eStrcpy(pShow,"ÓÃ»§Ö§¸¶ÖÐ");
 					}
-					pPar=PE_GetRecvIdPar("refundAmount");
-					if(pPar)
-					{
-						char DisplayMoney[16];
-						Conv_TmoneyToDmoney(DisplayMoney,pPar);
-						pShow += sprintf(pShow,"ÒÑÍË½ð¶î:%s\n",DisplayMoney);
+					else if(strstr(pPar,"PAYERROR"))
+					{//PAYERROR£ºÖ§¸¶Ê§°Ü
+						pShow = eStrcpy(pShow,"Ö§¸¶Ê§°Ü");
 					}
-					pPar=PE_GetRecvIdPar("payTime");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"Ö§¸¶Ê±¼ä:\n%s\n",pPar);
+					else if(strstr(pPar,"REFUND"))
+					{//REFUND£º
+						pShow = eStrcpy(pShow,"×ªÈëÍË¿î");
 					}
-					
-					pPar=PE_GetRecvIdPar("id");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"Ì«Ã×Á÷Ë®:%s\n",pPar);
+					else if(strstr(pPar,"PERATE_FAIL"))
+					{//PERATE_FAIL£ºÔ¤ÊÚÈ¨ÇëÇó²Ù×÷Ê§°Ü£»
+						pShow = eStrcpy(pShow,"Ô¤ÊÚÈ¨ÇëÇó²Ù×÷Ê§°Ü");
 					}
-					pPar=PE_GetRecvIdPar("outTradeId");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"µÚÈýÁ÷Ë®:%s\n",pPar);
+					else if(strstr(pPar,"OPERATE_SETTLING"))
+					{//OPERATE_SETTLING£ºÑº½ðÏû·ÑÒÑÊÜÀí£»
+						pShow = eStrcpy(pShow,"Ñº½ðÏû·ÑÒÑÊÜÀí");
 					}
-					
-					pPar=PE_GetRecvIdPar("transactionId");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"½»Ò×Á÷Ë®:%s\n",pPar);
+					else if(strstr(pPar,"REVOKED_SUCCESS"))
+					{//REVOKED_SUCCESS£ºÔ¤ÊÚÈ¨ÇëÇó³·Ïú³É¹¦
+						pShow = eStrcpy(pShow,"Ô¤ÊÚÈ¨ÇëÇó³·Ïú³É¹¦");
 					}
-					pPar=PE_GetRecvIdPar("orderNum");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"ÉÌ»§¶©µ¥ºÅ:%s\n",pPar);
+					*pShow++ = '\n';
+				}
+				pPar=PE_GetRecvIdPar("orderAmount");
+				if(pPar)
+				{
+					char DisplayMoney[16];
+					Conv_TmoneyToDmoney(DisplayMoney,pPar);
+					pShow += sprintf(pShow,"¶©µ¥×Ü¶î:%s\n",DisplayMoney);
+				}
+				pPar=PE_GetRecvIdPar("incomeAmount");
+				if(pPar)
+				{
+					char DisplayMoney[16];
+					Conv_TmoneyToDmoney(DisplayMoney,pPar);
+					pShow += sprintf(pShow,"ÊµÊÕ½ð¶î:%s\n",DisplayMoney);
+				}
+				pPar=PE_GetRecvIdPar("refundAmount");
+				if(pPar)
+				{
+					char DisplayMoney[16];
+					Conv_TmoneyToDmoney(DisplayMoney,pPar);
+					pShow += sprintf(pShow,"ÒÑÍË½ð¶î:%s\n",DisplayMoney);
+				}
+				pPar=PE_GetRecvIdPar("payTime");
+				if(pPar)
+				{
+					pShow += sprintf(pShow,"Ö§¸¶Ê±¼ä:\n%s\n",pPar);
+				}
+				
+				pPar=PE_GetRecvIdPar("id");
+				if(pPar)
+				{
+					pShow += sprintf(pShow,"Ì«Ã×Á÷Ë®:%s\n",pPar);
+				}
+				pPar=PE_GetRecvIdPar("outTradeId");
+				if(pPar)
+				{
+					pShow += sprintf(pShow,"Íâ²¿½»Ò×ºÅ:%s\n",pPar);
+				}
+				
+				pPar=PE_GetRecvIdPar("transactionId");
+				if(pPar)
+				{
+					pShow += sprintf(pShow,"½»Ò×ºÅ:%s\n",pPar);
+				}
+				pPar=PE_GetRecvIdPar("orderNum");
+				if(pPar)
+				{
+					pShow += sprintf(pShow,"ÄÚ²¿½»Ò×ºÅ:%s\n",pPar);
+				}
+				pPar=PE_GetRecvIdPar("module");
+				if(pPar)
+				{
+					pShow = eStrcpy(pShow,"Ä£¿é:");
+					if(strstr(pPar,"pay"))
+					{//pay£ºÊÕÒø£»
+						pShow = eStrcpy(pShow,"ÊÕÒø");
 					}
-					pPar=PE_GetRecvIdPar("module");
-					if(pPar)
-					{
-						pShow += sprintf(pShow,"module:%s\n",pPar);
+					else if(strstr(pPar,"mall"))
+					{//mall£ºÓÅÑ¡¿¨È¯»õ¼Ü£»
+						pShow = eStrcpy(pShow,"ÓÅÑ¡¿¨È¯»õ¼Ü");
 					}
-					/*
-					pPar=PE_GetRecvIdPar("fromType");
-					if(pPar)
-					{
-						pShow = eStrcpy(pShow,"¶©µ¥À´Ô´:");
-						if(strstr(pPar,"wx"))
-						{//wx£ºÎ¢ÐÅÊÕ¿îÂë£»
-							pShow = eStrcpy(pShow,"Ö§¸¶³É¹¦");
-						}
-						else if(strstr(pPar,"alipay"))
-						{//alipay£ºÖ§¸¶±¦ÊÕ¿îÂë
-							pShow = eStrcpy(pShow,"Î´Ö§¸¶");
-						}
-						else if(strstr(pPar,"web"))
-						{//web£ºWebÒ³Ãæ
-							pShow = eStrcpy(pShow,"Î´Ö§¸¶");
-						}
-						else if(strstr(pPar,"alipay"))
-						{//mini£ºÐ¡³ÌÐò£»
-							pShow = eStrcpy(pShow,"Î´Ö§¸¶");
-						}
+					else if(strstr(pPar,"recharge"))
+					{//recharge£º³äÖµ£»
+						pShow = eStrcpy(pShow,"³äÖµ");
 					}
-					*/
+					else if(strstr(pPar,"become_member"))
+					{//become_member£º»áÔ±¹ºÂò£»
+						pShow = eStrcpy(pShow,"»áÔ±¹ºÂò");
+					}
+					else if(strstr(pPar,"eatIn"))
+					{//eatIn£ºµêÄÚÏÂµ¥£»
+						pShow = eStrcpy(pShow,"µêÄÚÏÂµ¥");
+					}
+					else if(strstr(pPar,"takeOut"))
+					{//takeOut£ºÍâËÍ¶©µ¥£»
+						pShow = eStrcpy(pShow,"ÍâËÍ¶©µ¥");
+					}
+					else if(strstr(pPar,"selfTake"))
+					{//selfTake£ºÔ¤Ô¼×ÔÈ¡£»
+						pShow = eStrcpy(pShow,"Ô¤Ô¼×ÔÈ¡");
+					}
+					else if(strstr(pPar,"payment_card"))
+					{//payment_card£º¸¶·Ñ¿¨È¯£»
+						pShow = eStrcpy(pShow,"¸¶·Ñ¿¨È¯");
+					}
+					else if(strstr(pPar,"times_card"))
+					{//times_card£º´Î/ÔÂ¿¨
+						pShow = eStrcpy(pShow,"´Î/ÔÂ¿¨");
+					}
+					else
+					{//pShow += sprintf(pShow,"module:%s\n",pPar);
+						pShow = eStrcpy(pShow,pPar);
+					}
+					*pShow++ = '\n';
+				}
+				/*
+				pPar=PE_GetRecvIdPar("fromType");
+				if(pPar)
+				{
+					pShow = eStrcpy(pShow,"¶©µ¥À´Ô´:");
+					if(strstr(pPar,"wx"))
+					{//wx£ºÎ¢ÐÅÊÕ¿îÂë£»
+						pShow = eStrcpy(pShow,"Ö§¸¶³É¹¦");
+					}
+					else if(strstr(pPar,"alipay"))
+					{//alipay£ºÖ§¸¶±¦ÊÕ¿îÂë
+						pShow = eStrcpy(pShow,"Î´Ö§¸¶");
+					}
+					else if(strstr(pPar,"web"))
+					{//web£ºWebÒ³Ãæ
+						pShow = eStrcpy(pShow,"Î´Ö§¸¶");
+					}
+					else if(strstr(pPar,"alipay"))
+					{//mini£ºÐ¡³ÌÐò£»
+						pShow = eStrcpy(pShow,"Î´Ö§¸¶");
+					}
+				}
+				*/
+				if(pShow > showBuff)
+				{
 					*(--pShow)='\0';	//×îºóÒ»ÐÐ²»ÓÃ»»ÐÐ
 					APP_ShowInfo(pTitle,showBuff,30*1000);
-					PE_JsonFree(1);
 				}
+				PE_JsonFree(1);
 			}
-			//pSdkFun->net->KeyAccept(0x00);
-			break;
 		}
 		else 
 		{
@@ -727,7 +792,6 @@ int RefundFlow(char* pTitle)
 	int ret=1;
 	char* pCode;
 	do{
-		if(CheckMchidIsNull())return -1;
 		TCP_SetInterNotDisplay(FALSE);
 		if(Tcp_PeekLink()) //Tcp_Link(NULL);
 			return -2;
@@ -739,7 +803,7 @@ int RefundFlow(char* pTitle)
 		if(ret<0) break;
 		if(ret == OPER_HARD)
 		{
-		    if(APP_ScanInput(pTitle,"ÇëÊÖÊäÈë¶©µ¥ºÅ",NULL,g_ColData.transactionId,10,32)) 
+		    if(APP_ScanInput(pTitle,"ÇëÊÖ¶¯ÊäÈëÉÌ»§µ¥ºÅ",NULL,g_ColData.transactionId,10,32)) 
 				break;
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
@@ -806,9 +870,16 @@ int RefundFlow(char* pTitle)
 		PackData_refund();
 		TradeDataPacked_end();
 		// ·¢ËÍ½ÓÊÕÊý¾Ý
-		if(Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv)) break;
+		ret = Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv);
+		Tcp_Close(NULL);
+		if(ret) break;
 		
 		pCode=PE_GetRecvIdPar("errCode");
+		if(pCode==NULL)
+		{
+			APP_ShowTradeMsg("½ÓÊÕÊý¾ÝÒì³£",10000);
+			break;
+		}
 		if(pCode[0] == '0') 
 		{
 			APP_ShowRefundsOK(g_ColData.refundFee);
@@ -818,7 +889,7 @@ int RefundFlow(char* pTitle)
 		else //if(API_strcmp(code,"500"))
 		{
 			PE_ShowfailMsg(pCode);
-		 }
+		}
 	}while(0);
 	DataFree();
 	APP_Network_Disconnect(50);
@@ -830,16 +901,16 @@ int ConsumeCard(char* pTitle)
 	char* pCode;
 	int ret;
 	do{
-		if(CheckMchidIsNull())return -1;
 		TCP_SetInterNotDisplay(FALSE);
 		if(Tcp_PeekLink()) //Tcp_Link(NULL);
 			return -2;
 		APP_ShowSta(pTitle,"ÇëÉ¨ÓÅ»ÝÈ¯ºËÏúÂë");
-		ret=APP_OnlyCamScan(0x03,8,sizeof(g_ColData.code)-1,g_ColData.code,30*1000);
+		g_ColData.code[0]='\0';
+		ret=APP_OnlyCamScan(0x02,4,sizeof(g_ColData.code)-1,g_ColData.code,30*1000);
 		if(ret<0) break;
 		if(ret==OPER_HARD)
 		{
-			if(APP_ScanInput(pTitle,"ÇëÊäÈëºËÏúÂë",NULL,g_ColData.code,10,32)) 
+			if(APP_ScanInput(pTitle,"ÇëÊäÈëºËÏúÂë",NULL,g_ColData.code,4,32)) 
 				break;
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
@@ -851,7 +922,9 @@ int ConsumeCard(char* pTitle)
 		PackData_ConsumeCard();
 		TradeDataPacked_end();
 		// ·¢ËÍ½ÓÊÕÊý¾Ý
-		if(Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv)) break;
+		ret = Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv);
+		Tcp_Close(NULL);
+		if(ret) break;
 		pCode=PE_GetRecvIdPar("errCode");
 		if(pCode==NULL)
 		{
@@ -879,9 +952,9 @@ int ConsumeCard(char* pTitle)
 
 int shiftStatV2(char* pTitle)
 {
+	int ret;
 	char* pCode;
 	do{
-		if(CheckMchidIsNull())return -1;
 		// ×é½¨Êý¾Ý°ü,·¢ËÍÇëÇó
 		TCP_SetInterNotDisplay(FALSE);
 		if(Tcp_Link("Á¬½ÓÖÐÐÄ..")) break;
@@ -890,28 +963,45 @@ int shiftStatV2(char* pTitle)
 		PackData_shiftStatV2();
 		TradeDataPacked_end();
 		// ·¢ËÍ½ÓÊÕÊý¾Ý
-		if(Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv)) break;
+		ret = Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv);
+		Tcp_Close(NULL);
+		if(ret) break;
 		pCode=PE_GetRecvIdPar("errCode");
 		if(pCode==NULL)
 		{
 			APP_ShowTradeMsg("½ÓÊÕÊý¾ÝÒì³£",10000);
 			break;
 		}
-		TRACE("reCode:%s",pCode); 
 		if(pCode[0] == '0') 
 		{
-			char *stat=PE_GetRecvIdPar("stat");
+			char showbuff[1024],*pshow;
+			char IndexBuff[63],type;
+			char *pPar,*stat;
 			PE_ReadRecvIdPar("recordId",g_ColData.recordId); 
-			if((stat!= NULL) && (API_strlen(stat)>8))
+			showbuff[0] = '\0';
+			pshow = showbuff;
+			pPar=PE_GetRecvIdPar("staff");
+			if(pPar)
+			{
+				API_Utf8ToGbk(IndexBuff,sizeof(IndexBuff),pPar);
+				pshow += sprintf(pshow,"ÊÕÒøÔ±:%s\n",IndexBuff);
+			}
+			pPar=PE_GetRecvIdPar("startTime");
+			if(pPar)
+			{
+				pshow += sprintf(pshow,"ÉÏ°àÊ±¼ä:\n%s\n",pPar);
+			}
+			pPar=PE_GetRecvIdPar("endTime");
+			if(pPar)
+			{
+				pshow += sprintf(pshow,"ÏÂ°àÊ±¼ä:\n%s\n",pPar);
+			}
+			stat=PE_GetRecvIdPar("stat");
+			if((stat!= NULL) && ((ret=API_strlen(stat))>8))
 			{	
-				char showbuff[1024],*pshow;
-				char IndexBuff[63],type,*pPar;
-				//u16 i,total;
 				dfJsonTable *pModule;
-				dfJsonTable *pJsonData,*pStartJson = Conv_JSON_GetMsg(stat,stat+API_strlen(stat));
+				dfJsonTable *pJsonData,*pStartJson = Conv_JSON_GetMsg(stat,stat+ret);
 				pJsonData = pStartJson;
-				showbuff[0] = '\0';
-				pshow = showbuff;
 				while(pJsonData)
 				{
 					pPar=Conv_GetJsonValue(pJsonData,"title",NULL);
@@ -959,38 +1049,14 @@ int shiftStatV2(char* pTitle)
 						pshow += sprintf(pshow,"ºÏ¼Æ:%sÔª",pPar);
 					}
 					*pshow++ ='\n';
-					/*			
-					for(i=0;i<total;i++)
-					{
-						sprintf(IndexBuff,"module[%d]/payType",i);
-						pPar=Conv_GetJsonValue(pJsonData,IndexBuff,NULL);
-						if(pPar == NULL) break;
-						API_Utf8ToGbk(IndexBuff,sizeof(IndexBuff),pPar);
-						pshow=eStrcpy(pshow,IndexBuff);
-						*pshow++ =':';
-						*pshow++ =' ';
-						sprintf(IndexBuff,"module[%d]/count",i);
-						pPar=Conv_GetJsonValue(pJsonData,IndexBuff,NULL);
-						sprintf(IndexBuff,"%s´Î",pPar);
-						pshow=eStrcpy(pshow,IndexBuff);
-						*pshow++ = ',';
-						sprintf(IndexBuff,"module[%d]/amount",i);
-						pPar=Conv_GetJsonValue(pJsonData,IndexBuff,NULL);
-						sprintf(IndexBuff,"%sÔª",pPar);
-						pshow=eStrcpy(pshow,IndexBuff);
-						*pshow++ = '\n';
-					}
-					*/
 					pJsonData = pJsonData->pNext;
-					//*pshow++ = '\n';
 				}
-				*(--pshow)='\0';	//×îºóÒ»ÐÐ²»ÓÃ»»ÐÐ
-				APP_ShowInfo(pTitle,showbuff,10*1000);
 				Conv_JSON_free(pStartJson);
 			}
-			else
+			if(pshow > showbuff)
 			{
-				APP_ShowMsg(pTitle,"ÎÞ½»Ò×¼ÇÂ¼",5000);
+				*(--pshow)='\0';	//×îºóÒ»ÐÐ²»ÓÃ»»ÐÐ
+				APP_ShowInfo(pTitle,showbuff,30*1000);
 			}
 		}
 		else 
@@ -999,7 +1065,6 @@ int shiftStatV2(char* pTitle)
 		} 
 	}while(0);
 	DataFree();
-	Tcp_Close(NULL);
 	return 0;	
 }
 
@@ -1007,10 +1072,10 @@ int shiftStatV2(char* pTitle)
 int shiftRecordV2(char* pTitle)
 {
 	char* pCode;
-	u16 recordMax,sLen;
+	int ret;
+	u16 recordMax;
 	u16 count,nowPage;
 	char *showbuff=NULL;
-	if(CheckMchidIsNull())return -1;
 	// ×é½¨Êý¾Ý°ü,·¢ËÍÇëÇó
 	TCP_SetInterNotDisplay(FALSE);
 	nowPage=1;
@@ -1025,8 +1090,9 @@ int shiftRecordV2(char* pTitle)
 		PackData_shiftRecordV2();
 		TradeDataPacked_end();
 		// ·¢ËÍ½ÓÊÕÊý¾Ý
-		if(Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv)) break;
+		ret=Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv);
 		Tcp_Close(NULL);
+		if(ret) break;
 		pCode=PE_GetRecvIdPar("errCode");
 		if(pCode==NULL)
 		{
@@ -1040,33 +1106,42 @@ int shiftRecordV2(char* pTitle)
 			if(recordCount!=NULL && (recordMax=API_atoi(recordCount))>0)
 			{
 				char *recordList=PE_GetRecvIdPar("recordList");
-				if((recordList!= NULL) && (API_strlen(recordList)>8))
+				if((recordList!= NULL) && ((ret=API_strlen(recordList))>8))
 				{	
 					u8 type;
 					char IndexBuff[64];
 					char *pshow,*pPar;
 					dfJsonTable *pStat,*pModule;
 					dfJsonTable *pJsonData,*pStartJson;
-					sLen=API_strlen(recordList);
-					pStartJson = Conv_JSON_GetMsg(recordList,recordList+sLen);
-					pJsonData = pStartJson;
 					if(showbuff) free(showbuff);
-					showbuff=(char*)malloc(sLen+512);
+					showbuff=(char*)malloc(ret+512);
+					if(showbuff == NULL)
+					{
+						APP_ShowTradeMsg("ÉêÇëÄÚ´æÊ§°Ü",5000);
+						break;
+					}
+					pStartJson = Conv_JSON_GetMsg(recordList,recordList+ret);
+					pJsonData = pStartJson;
 					showbuff[0] = '\0';
 					pshow = showbuff;
 					while(pJsonData)
 					{
-						pPar=Conv_GetJsonValue(pJsonData,"recordId",NULL);
-						pshow += sprintf(pshow,"½»°à¼ÇÂ¼id:%s\n",pPar);
+						pPar=Conv_GetJsonValue(pJsonData,"staff",NULL);
+					//	if(g_ColData.terminalType[0] == '2')
+					//		pshow += sprintf(pshow,"ÖÕ¶Ë:%s\n",pPar);
+					//	else if(g_ColData.terminalType[0] == '1')
+						if(pPar)
+						{
+							API_Utf8ToGbk(IndexBuff,sizeof(IndexBuff),pPar);
+							pshow += sprintf(pshow,"ÊÕÒøÔ±:%s\n",IndexBuff);
+						}
+					//	pPar=Conv_GetJsonValue(pJsonData,"recordId",NULL);
+					//	pshow += sprintf(pshow,"½»°à¼ÇÂ¼id:%s\n",pPar);
 						pPar=Conv_GetJsonValue(pJsonData,"startTime",NULL);
 						pshow += sprintf(pshow,"ÉÏ°àÊ±¼ä:\n%s\n",pPar);
 						pPar=Conv_GetJsonValue(pJsonData,"endTime",NULL);
 						pshow += sprintf(pshow,"ÏÂ°àÊ±¼ä:\n%s\n",pPar);
-						pPar=Conv_GetJsonValue(pJsonData,"staff",NULL);
-						if(g_ColData.terminalType[0] == '2')
-							pshow += sprintf(pshow,"ÖÕ¶Ë:%s\n",pPar);
-						else if(g_ColData.terminalType[0] == '1')
-							pshow += sprintf(pshow,"Ô±¹¤:%s\n",pPar);
+						
 						type = 0;
 						pStat=(dfJsonTable *)Conv_GetJsonValue(pJsonData,"stat",&type);
 						if(type >= ITEM_STRUCT)
@@ -1118,28 +1193,6 @@ int shiftRecordV2(char* pTitle)
 									pshow += sprintf(pshow,"ºÏ¼Æ:%sÔª",pPar);
 								}
 								*pshow++ ='\n';
-								/*
-								for(i=0;i<total;i++)
-								{
-									sprintf(IndexBuff,"module[%d]/payType",i);
-									pPar=Conv_GetJsonValue(pStat,IndexBuff,NULL);
-									if(pPar == NULL) break;
-									API_Utf8ToGbk(IndexBuff,sizeof(IndexBuff),pPar);
-									pshow=eStrcpy(pshow,IndexBuff);
-									*pshow++ =':';
-									*pshow++ =' ';
-									sprintf(IndexBuff,"module[%d]/count",i);
-									pPar=Conv_GetJsonValue(pStat,IndexBuff,NULL);
-									sprintf(IndexBuff,"%s´Î",pPar);
-									pshow=eStrcpy(pshow,IndexBuff);
-									*pshow++ = ',';
-									sprintf(IndexBuff,"module[%d]/amount",i);
-									pPar=Conv_GetJsonValue(pStat,IndexBuff,NULL);
-									sprintf(IndexBuff,"%sÔª",pPar);
-									pshow=eStrcpy(pshow,IndexBuff);
-									*pshow++ = '\n';
-								}
-								*/
 								pStat = pStat->pNext;
 								//*pshow++ = '\n';
 							}
@@ -1147,14 +1200,18 @@ int shiftRecordV2(char* pTitle)
 						//pshow=eStrcpy(pshow,"======================\n");
 						pJsonData = pJsonData->pNext;
 					}
-					*(--pshow)='\0';	//×îºóÒ»ÐÐ²»ÓÃ»»ÐÐ
+					Conv_JSON_free(pStartJson);
+					PE_JsonFree(1);
+					if(pshow > showbuff)
 					{
 						int evet;
+						*(--pshow)='\0';	//×îºóÒ»ÐÐ²»ÓÃ»»ÐÐ
 						if((nowPage*count) < recordMax)
 							sprintf(IndexBuff,"µ±Ç°%d×Ü%d,È·ÈÏÏòÏÂ",nowPage,(recordMax+count-1)/count);
 						else
 							sprintf(IndexBuff,"µ±Ç°%d×Ü%d,È·ÈÏ½áÊø",nowPage,(recordMax+count-1)/count);
 						evet=APP_ShowInfoMsg(pTitle,showbuff,IndexBuff,30*1000);
+						free(showbuff); showbuff=NULL;
 						if(evet & EVENT_OK)
 						{
 							if((nowPage*count) < recordMax)
@@ -1166,8 +1223,10 @@ int shiftRecordV2(char* pTitle)
 						//if(evet & EVENT_CANCEL) break;
 						//if(evet & EVENT_TIMEOUT) break;
 					}
-					free(showbuff); showbuff=NULL;
-					Conv_JSON_free(pStartJson);
+					else
+					{
+						free(showbuff); showbuff=NULL;
+					}
 				}
 			}
 			else
@@ -1181,15 +1240,14 @@ int shiftRecordV2(char* pTitle)
 		} 
 	}while(0);
 	DataFree();
-	Tcp_Close(NULL);
 	return 0;	
 }
 
 
 int shiftConfirm(char* pTitle)
 {
+	int ret;
 	char* pCode;
-	if(CheckMchidIsNull())return -1;
 	if(API_strlen(g_ColData.recordId) == 0)
 	{
 		APP_ShowTradeFA("ÇëÏÈ×ö½»°àÍ³¼Æ",3000);
@@ -1204,7 +1262,9 @@ int shiftConfirm(char* pTitle)
 		PackData_shiftConfirm();
 		TradeDataPacked_end();
 		// ·¢ËÍ½ÓÊÕÊý¾Ý
-		if(Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv)) break;
+		ret=Tcp_SocketData("Êý¾Ý½»»¥",Full_CheckRecv);
+		Tcp_Close(NULL);
+		if(ret) break;
 		pCode=PE_GetRecvIdPar("errCode");
 		if(pCode==NULL)
 		{
@@ -1225,7 +1285,6 @@ int shiftConfirm(char* pTitle)
 		} 
 	}while(0);
 	DataFree();
-	Tcp_Close(NULL);
 	return 0;	
 }
 

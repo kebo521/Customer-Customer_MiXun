@@ -13,11 +13,11 @@
 #define		TM_SIGNKEY						"ac6d97e67b444b7a43edfc9182634786"		//signKey
 
 #define	TermModel			"KNS260"			//终端型号
-#define	Version				"V2.01.010"			//软件版本 
+#define	Version				"V2.01.018"			//软件版本 
 //============中国银联
 #define	CustomerVersion		"太米-WIFI"			//客户版本
 
-#define	VersionDate			"2020-06-08"		//软件版本日期
+#define	VersionDate			"2020-07-01"		//软件版本日期
 
 
 typedef struct
@@ -28,13 +28,13 @@ typedef struct
 	char    ServerPort[16];
 	//==============
 	char	developerId[16+1];	//系统分配给开发者的唯一id
-	char	terminalType[1+1];	//终端类型 1：门店，此时shopId必传 ,2：终端，此时sn号必传
+	//char	terminalType[1+1];	//终端类型 1：门店，此时shopId必传 ,2：终端，此时sn号必传
 	char	merchantId[12+1];			//品牌id 
 	char	merchantSecretKey[32+1];	//品牌密钥 
 	char	sn[32];				//终端SN号
-	char	shopId[12+1];		//门店Id
+	//char	shopId[12+1];		//门店Id
 	u8		userNum,userIndex;	//员工数量,当前员工
-	char	userCode[8][12+1];	//门店员工账号Id  
+	//char	userCode[8][12+1];	//门店员工账号Id  
 }TERM_PAR;
 extern TERM_PAR    Term_Par;
 

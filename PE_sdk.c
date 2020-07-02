@@ -16,9 +16,9 @@ int PE_JsonDataParse(char *pIndata,int inLen)
 
 void PE_JsonFree(int num)
 {
+	sIdDataTable* pPrevious;
 	while(pJsonTable)
 	{
-		sIdDataTable* pPrevious;
 		pPrevious=pJsonTable->pPrevious;
 		free(pJsonTable);
 		pJsonTable=pPrevious;
@@ -156,10 +156,7 @@ int PE_CamScan(char flagd,char* pHintOrTMoney,char *pOutCode,int MinLen,int MaxL
 	{
 		UI_ShowPictureFile(&Rect,"ScanIpt.clz");
 		Rect.top	= UI_SCAN_TEXT_Y;
-		if(flagd=='R')	// "订单退款"
-			flagKey	= 0x02;
-		else			// "交易查询"
-			flagKey	= 0x02;
+		flagKey	= 0x02;
 	}
 	else
 	{

@@ -9,8 +9,8 @@ void TermParSetDefault(void)
 	CLEAR(Term_Par);
 
 	API_strcpy(Term_Par.developerId,"100001");
-	API_strcpy(Term_Par.terminalType,"2");
-	API_strcpy(Term_Par.shopId,"488");
+//	API_strcpy(Term_Par.terminalType,"2");
+//	API_strcpy(Term_Par.shopId,"488");
 	//API_strcpy(Term_Par.ServerIp,"www.uutianfu.com");
 	//API_strcpy(Term_Par.ServerPort,"443");
 	API_strcpy(Term_Par.CustVer,CustomerVersion);
@@ -30,19 +30,20 @@ void MachDatainit(void)
 	}
 	API_strcpy(g_ColData.developerId,DEVELOPER_ID);//Term_Par.developerId);
 	API_strcpy(g_ColData.signkey,TM_SIGNKEY);		//Term_Par.developerId);
-	API_strcpy(g_ColData.merchantId,Term_Par.userCode[0]);
+//	API_strcpy(g_ColData.merchantId,Term_Par.userCode[0]);
 	API_strcpy(g_ColData.merchantSecretKey,Term_Par.merchantSecretKey);
-	API_strcpy(g_ColData.shopId,Term_Par.shopId);
+//	API_strcpy(g_ColData.shopId,Term_Par.shopId);
 	//API_strcpy(g_ColData.userCode,Term_Par.userCode[0]);
-	API_strcpy(g_ColData.terminalType,Term_Par.terminalType);
-	API_strcpy(g_ColData.userCode,"K21234567890");
+	//API_strcpy(g_ColData.terminalType,Term_Par.terminalType);
+	API_strcpy(g_ColData.terminalType,"2");
+	//API_strcpy(g_ColData.userCode,"K21234567890");
 //	API_strcpy(g_ColData.returnContent,"1");
 
 	//======导入交易地址=============
 	Tcp_LoadMsg(HTTP_TRADE_ADDERR,HTTP_TRADE_PORT);
 }
 
-
+/*
 int ScanMerchantInfo(char *title)
 {
     char OutCode[128]={0};
@@ -90,7 +91,7 @@ int ScanMerchantInfo(char *title)
     return APP_ShowInfo("品牌信息",OutCode,10000);
 }
 
-
+*/
 
 
 int SoftInfo(char*  ptitle)
@@ -104,16 +105,14 @@ int SoftInfo(char*  ptitle)
 	API_strcat(Msg,"\n");
     API_strcat(Msg,Version);
 	API_strcat(Msg,"\nSN:");
-	API_strcat(Msg,Term_Par.shopId);
+	API_strcat(Msg,g_ColData.sn);
 	API_GUI_CreateWindow("软件版本",NULL,NULL,0);
 	API_GUI_Info(NULL,TEXT_ALIGN_CENTER|TEXT_VALIGN_TOP,Msg);
 	API_GUI_Info(NULL,TEXT_ALIGN_RIGHT|TEXT_VALIGN_BOTTOM,"按[确认]键检测更新");
 	API_GUI_Show();
 	if(EVENT_OK==APP_WaitUiEvent(30*1000))
 	{
-		// APP_ShowMsg("提示","正在检测版本...",1);
-		//if(0==pSdkFun->sdk->tmsSyn("版本检测"))
-		  //   APP_ShowMsg("提示","无版本更新",3000);
+		return pSdkFun->app->NetInstallAPP("版本检测");
 	}
 	return 0;
 }
@@ -129,7 +128,7 @@ int APP_WIFIFunction(char* title)
 	return APP_CreateNewMenuByStruct(title,sizeof(MenuStruPar)/sizeof(CMenuItemStru),MenuStruPar,30*1000);
 }
 
-
+/*
 int SetUserID(char* title)
 {
 	if(APP_InputAbc(title,"设置操作员", "按[+]键切换输入法", Term_Par.userCode[0],0, sizeof(Term_Par.userCode[0])-1)==0)
@@ -161,14 +160,23 @@ int APP_TermType(char* pTitle)
 	{
 		if(ret >= 0)
 		{
-			Term_Par.terminalType[0]= ret+'1';
+			if(ret > 0)
+			{
+				APP_ShowSta(pTitle,"终端");
+			}
+			else
+			{
+				APP_ShowSta(pTitle,"门店");
+			}
+			g_ColData.terminalType[0]= ret+'1';
+			Term_Par.terminalType[0] = g_ColData.terminalType[0];
 			Par_Set(Term_Par.terminalType, sizeof(Term_Par.terminalType));
+			APP_WaitUiEvent(2*1000);
 		}
-		else return EVENT_NONE;
 	}
 	return EVENT_NONE;
 }
-
+*/
 
 int APP_InMaster(char*  ptitle)
 {
@@ -180,9 +188,9 @@ int APP_TermMenu(char* title)
 	CMenuItemStru MenuStruPar[]=
 	{
 		//"扫码导入品牌信息",		ScanMerchantInfo,
-		"设置终端类型",			APP_TermType,
-		"设置门店编号",			SetShopID,
-		"设置店员号",			SetUserID,
+	//	"设置终端类型",			APP_TermType,
+	//	"设置门店编号",			SetShopID,
+	//	"设置店员号",			SetUserID,
 		"WIFI功能",				APP_WIFIFunction,
 		"设备信息",				SoftInfo,
 		"检查更新",				pSdkFun->app->NetInstallAPP,
@@ -211,20 +219,21 @@ int APP_TradeMainMenu(char* title)
 	return 0;
 }
 
-
+static int appMenuRet;
 int customer_MainMenu(char* title)
 {
 	// 关闭公共区自动提示
-	int ret;
 	TCP_SetInterNotDisplay(TRUE);	
 	UI_SetMenuItem(6);
 	for(;;)
 	{
 		APP_TradeMainMenu(title);
-		ret = APP_ShowMenuProsse();
-		if(EVENT_QUIT&ret)
+		appMenuRet = APP_ShowMenuProsse();
+		if(EVENT_QUIT&appMenuRet)
 		{
-			if(ret&EVENT_INDEX)
+			DataEnd();				//释放所申请内存
+			UI_DisplayBitMapEND();	//编辑图片数字时用到
+			if(appMenuRet&EVENT_INDEX)
 				return EVENT_QUIT;
 			else
 				return 0;

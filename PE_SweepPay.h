@@ -30,13 +30,13 @@ typedef struct
 	char	terminalType[1+1];	// 终端类型，1：门店，此时shopId必传 2：终端，此时sn号必传	
 	char	sn[32];			// 终端sn号  
 	char	shopId[12+1];		//门店Id
-	char	userCode[12+1];		// 门店员工账号Id  
+//	char	userCode[12+1];		// 门店员工账号Id  
 	char	FixedAmount[12+1];	//支付金额，单位分 
 	char	payAmount[12+1];	//支付金额，单位分 
 	char	refundFee[12+1];	//退款金额，单位分，不传默认为全额退款 
 	char	payType[12+1];		//支付方式，如果不传，系统会通过authCode获取对应的支付方式 wx_pay：微信支付；ali_pay：支付宝；union_online：银联钱包；member_wallet：会员钱包；
 	char    tradeId[32+1];		//太米系统流水Id，tradeId、transactionId和outTradeId至少传入一个，优先级tradeId > outTradeId > transactionId  
-	char	outTradeId[31+1];		// 第三方内部流水号，tradeId、transactionId和outTradeId至少传入一个，优先级tradeId > outTradeId > transactionId  
+	char	outTradeId[32+1];		// 第三方内部流水号，tradeId、transactionId和outTradeId至少传入一个，优先级tradeId > outTradeId > transactionId  
 	char	transactionId[32+1];	//微信或支付宝或银联的订单号，或太米商户订单号，tradeId、transactionId和outTradeId至少传入一个，优先级tradeId > outTradeId > transactionId。由于个别渠道不会返回该参数，因此有可能无效	
 	char	returnContent[1+1]; //  返回数据内容 1：返回详细信息 2：仅返回退款结果 默认1 
 	char	authCode[256+1];		//支付授权码或会员卡动态码，如果是会员卡动态码则会调用会员余额支付 
@@ -56,7 +56,7 @@ extern QR_COL_Data  g_ColData;
 
 extern void Send_add_item(char* pID,char* pData);
 #define SEND_ADD_ITEM(s) 	Send_add_item(#s,g_ColData.##s) 
-
+extern void DataEnd(void);
 extern int MicroPay(char* pTitle);
 extern int FixedMicroPay(char* pTitle);
 extern  int OrderQuery(char* pTitle);
