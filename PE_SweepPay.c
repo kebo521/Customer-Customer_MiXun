@@ -76,6 +76,7 @@ int SuccessTradeProcess(void)
 {
 	char DisplayMoney[16];
 	char *pPayType,*payType;
+	int ret;
 	Conv_TmoneyToDmoney(DisplayMoney,g_ColData.payAmount);
 	//APP_ShowTradeOK(g_ColData.payAmount); 
 	APP_ShowTrade("TradeOK.clz",DisplayMoney,"交易成功");
@@ -102,10 +103,10 @@ int SuccessTradeProcess(void)
 		pPayType="收款成功";
 	}	
     APP_TTS_PlayText("%s%s元",pPayType,DisplayMoney);
-	APP_WaitUiEvent(10*1000);
+	ret=APP_WaitUiEvent(6*1000);
 	//-------更新本地时间----------
 	SetSysDateTime(PE_GetRecvIdPar("payTime"));
-	return 0;
+	return ret;
 }
 
 void Send_add_item(char* pID,char* pData)
@@ -403,7 +404,7 @@ int inside_OrderQuery(int PeekLink)
 	return ret;
 }
 
-void inside_MicroPay(int Errtimes)
+int inside_MicroPay(int Errtimes)
 {
 	int ret;
 	char *pCode;
@@ -414,13 +415,13 @@ void inside_MicroPay(int Errtimes)
 	// 发送接收数据
 	ret = Tcp_SocketData("数据交互",Full_CheckRecv);
 	Tcp_Close(NULL);
-	if(ret) return;
+	if(ret) return ret;
 RE_QUERY_ADDER:
 	pCode=PE_GetRecvIdPar("errCode");
 	if(pCode==NULL)
 	{
 		APP_ShowTradeFA("接收数据异常",10000);
-		return;
+		return OPER_ERR;
 	}
 	TRACE("reCode:%s",pCode); 
 	if(pCode[0] == '0') //返回成功，可以解析下一层 数据。
@@ -435,12 +436,14 @@ RE_QUERY_ADDER:
 			{
 				APP_ShowTradeMsg("无状态信息",10000);
 				PE_JsonFree(1);
-				return;
+				return OPER_ERR;
 			}
 			if(API_strcmp(payStatus,"SUCCESS")==0)
 			{
 				PE_ReadRecvIdPar("incomeAmount",g_ColData.payAmount);
 				SuccessTradeProcess();	
+				PE_JsonFree(1);
+				return OPER_OK;
 			}
 			else if(API_strcmp(payStatus,"CLOSE")==0)
 			{
@@ -465,27 +468,26 @@ RE_QUERY_ADDER:
 				PE_JsonFree(1);
 				if(EVENT_CANCEL == API_WaitEvent(2*1000,EVENT_UI,EVENT_NONE))
 				{
-					return;
+					return OPER_RET;
 				}
 				APP_SetKeyAccept(0x01);
 				PE_JsonFree(1);
 				ret = inside_OrderQuery(0);
 				if(ret == OPER_RET)
 				{
-					return;
+					return OPER_RET;
 				}
 				else if(ret)
 				{
 					APP_ShowTradeMsg("订单支付中,稍候查询确认结果",10000);
-					return;
+					return OPER_NEW;
 				}
 				if(Errtimes-- <= 0)
 				{
 					APP_ShowTradeMsg("订单支付中,\n查询结果超时\n稍候手动查询确认结果",10000);
-					return;
+					return OPER_NEW;
 				}
 				goto RE_QUERY_ADDER; 
-				
 			}
 			PE_JsonFree(1);
 		}
@@ -495,12 +497,14 @@ RE_QUERY_ADDER:
 	{
 		PE_ShowfailMsg(pCode);
 	}
+	return OPER_NEW;
 }
 
 int MicroPay(char* title)
 {    
-	do{
-		TCP_SetInterNotDisplay(FALSE);
+	TCP_SetInterNotDisplay(FALSE);
+	while(1)
+	{
 		if(Tcp_PeekLink()) //Tcp_Link(NULL);
 			return -2;
 		while(1)
@@ -517,8 +521,10 @@ int MicroPay(char* title)
 			break;
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
-		inside_MicroPay(10);
-	}while(0);
+		if(0==inside_MicroPay(10))
+			continue;
+		break;
+	}
     DataFree();
 	Tcp_Close(NULL);
 	return 0;	
@@ -528,8 +534,9 @@ int MicroPay(char* title)
 int FixedMicroPay(char* title)
 {    
 	int ret=0;
-	do{
-		TCP_SetInterNotDisplay(FALSE);
+	TCP_SetInterNotDisplay(FALSE);
+	while(1)
+	{
 		if(Tcp_PeekLink()) //Tcp_Link(NULL);
 			return -2;
 		if(0>APP_EditSum(title,'S',g_ColData.FixedAmount,60*1000))
@@ -547,8 +554,10 @@ int FixedMicroPay(char* title)
 			return ret;
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
-		inside_MicroPay(10);
-	}while(0);
+		if(0 == inside_MicroPay(10))
+			continue;
+		break;
+	}
     DataFree();
 	Tcp_Close(NULL);
 	return 0;	
@@ -571,7 +580,7 @@ int OrderQuery(char* pTitle)
 		if(ret<0) break;
 		if(ret==OPER_HARD)
 		{
-		    if(APP_ScanInput(pTitle,"请手动输入商户单号",NULL,g_ColData.transactionId,10,32)) 
+		    if(APP_ScanInput(pTitle,"请手动输入商户单号",NULL,g_ColData.transactionId,8,32)) 
 				break;
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
@@ -799,11 +808,11 @@ int RefundFlow(char* pTitle)
 		g_ColData.tradeId[0]='\0';
 		g_ColData.outTradeId[0]='\0';	
 		g_ColData.transactionId[0]='\0';
-		ret=APP_CamScan('R',NULL,g_ColData.transactionId,10,32,20*1000);
+		ret=APP_CamScan('R',NULL,g_ColData.transactionId,8,32,20*1000);
 		if(ret<0) break;
 		if(ret == OPER_HARD)
 		{
-		    if(APP_ScanInput(pTitle,"请手动输入商户单号",NULL,g_ColData.transactionId,10,32)) 
+		    if(APP_ScanInput(pTitle,"请手动输入商户单号",NULL,g_ColData.transactionId,8,32)) 
 				break;
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
@@ -884,7 +893,7 @@ int RefundFlow(char* pTitle)
 		{
 			APP_ShowRefundsOK(g_ColData.refundFee);
 			APP_TTS_PlayText("退款成功");
-			APP_WaitUiEvent(10*1000);
+			APP_WaitUiEvent(6*1000);
 		}
 		else //if(API_strcmp(code,"500"))
 		{
@@ -950,6 +959,42 @@ int ConsumeCard(char* pTitle)
 	return 0;	
 }
 
+int shiftConfirm(char* pTitle)
+{
+	int ret;
+	char* pCode;
+	if(Tcp_Link("连接中心..")) return -1;
+	// 组建数据包,发送请求
+	TradeDataPacked_start(HTTP_TRADE_ADDERR"/open/Staff/shift");
+	PackData_shiftConfirm();
+	TradeDataPacked_end();
+	// 发送接收数据
+	ret=Tcp_SocketData("数据交互",Full_CheckRecv);
+	Tcp_Close(NULL);
+	if(ret) return -2;
+	pCode=PE_GetRecvIdPar("errCode");
+	if(pCode==NULL)
+	{
+		APP_ShowTradeMsg("接收数据异常",10000);
+	}
+	else
+	{
+		TRACE("reCode:%s",pCode); 
+		if(pCode[0] == '0') 
+		{
+			APP_ShowTrade("TradeOK.clz",NULL,"交班成功");
+			g_ColData.recordId[0]='\0';
+			APP_WaitUiEvent(5*1000);
+		}
+		else 
+		{
+			PE_ShowfailMsg(pCode);
+		} 
+	}
+	PE_JsonFree(1);
+	return 0;
+}
+
 int shiftStatV2(char* pTitle)
 {
 	int ret;
@@ -977,7 +1022,6 @@ int shiftStatV2(char* pTitle)
 			char showbuff[1024],*pshow;
 			char IndexBuff[63],type;
 			char *pPar,*stat;
-			PE_ReadRecvIdPar("recordId",g_ColData.recordId); 
 			showbuff[0] = '\0';
 			pshow = showbuff;
 			pPar=PE_GetRecvIdPar("staff");
@@ -1056,7 +1100,11 @@ int shiftStatV2(char* pTitle)
 			if(pshow > showbuff)
 			{
 				*(--pshow)='\0';	//最后一行不用换行
-				APP_ShowInfo(pTitle,showbuff,30*1000);
+				if(EVENT_OK == APP_ShowInfoMsg(pTitle,showbuff,"按[确认]键交班",30*1000))
+				{
+					PE_ReadRecvIdPar("recordId",g_ColData.recordId); 
+					shiftConfirm("交班确认");
+				}
 			}
 		}
 		else 
@@ -1244,49 +1292,7 @@ int shiftRecordV2(char* pTitle)
 }
 
 
-int shiftConfirm(char* pTitle)
-{
-	int ret;
-	char* pCode;
-	if(API_strlen(g_ColData.recordId) == 0)
-	{
-		APP_ShowTradeFA("请先做交班统计",3000);
-		return 0;
-	}
-	// 组建数据包,发送请求
-	TCP_SetInterNotDisplay(FALSE);
-	do{
-		if(Tcp_Link("连接中心..")) break;
-		// 组建数据包,发送请求
-		TradeDataPacked_start(HTTP_TRADE_ADDERR"/open/Staff/shift");
-		PackData_shiftConfirm();
-		TradeDataPacked_end();
-		// 发送接收数据
-		ret=Tcp_SocketData("数据交互",Full_CheckRecv);
-		Tcp_Close(NULL);
-		if(ret) break;
-		pCode=PE_GetRecvIdPar("errCode");
-		if(pCode==NULL)
-		{
-			APP_ShowTradeMsg("接收数据异常",10000);
-			break;
-		}
-		TRACE("reCode:%s",pCode); 
-		if(pCode[0] == '0') 
-		{
-			//APP_ShowTradeOK("交班成功");
-			APP_ShowTrade("TradeOK.clz",NULL,"交班成功");
-			g_ColData.recordId[0]='\0';
-			APP_WaitUiEvent(5*1000);
-		}
-		else 
-		{
-			PE_ShowfailMsg(pCode);
-		} 
-	}while(0);
-	DataFree();
-	return 0;	
-}
+
 
 
 int ShiftMenu(char* pTitle)
@@ -1294,7 +1300,7 @@ int ShiftMenu(char* pTitle)
 	CMenuItemStru MenuStruPar[]=
 	{
 		"交班统计",		shiftStatV2,
-		"确认交班",		shiftConfirm,
+		//"确认交班",		shiftConfirm,
 		"查看交班记录",	shiftRecordV2,
 	};
 	APP_CreateNewMenuByStruct(pTitle,sizeof(MenuStruPar)/sizeof(CMenuItemStru),MenuStruPar,30*1000);

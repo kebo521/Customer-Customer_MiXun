@@ -13,7 +13,7 @@
 #define		TM_SIGNKEY						"ac6d97e67b444b7a43edfc9182634786"		//signKey
 
 #define	TermModel			"KNS260"			//终端型号
-#define	Version				"V2.01.019"			//软件版本 
+#define	Version				"V2.01.021"			//软件版本 
 //============中国银联
 #define	CustomerVersion		"太米-WIFI"			//客户版本
 
