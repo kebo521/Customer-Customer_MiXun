@@ -93,7 +93,7 @@ int PE_CheckRecvData(char* pInRecv,int Len)
 int InputTotalFee(char *pTitle)
 {
 	CLEAR(g_ColData.payAmount);
-	API_strcpy(g_ColData.payAmount,"0");
+	//API_strcpy(g_ColData.payAmount,"0");
 	if(0>APP_EditSum(pTitle,'S',g_ColData.payAmount,60*1000))
 	{
 		return -1;

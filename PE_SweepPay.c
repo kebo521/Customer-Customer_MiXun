@@ -1231,7 +1231,7 @@ int shiftRecordV2(char* pTitle)
 			}
 			else
 			{
-				APP_ShowTradeMsg("无交易记录",5000);
+				APP_ShowTradeMsg("无交班记录",5000);
 			}
 		}
 		else 
