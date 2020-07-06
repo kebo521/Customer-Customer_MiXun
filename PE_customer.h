@@ -4,20 +4,30 @@
 
 //#define  	HTTP_TRADE_ADDERR   			"https://pos.weixincore.com"
 //#define 	HTTP_TRADE_PORT					443	
-
+/*
+//======================测试平台=======================================
 #define  	HTTP_TRADE_ADDERR   			"http://pos.weixincore.com"
 #define 	HTTP_TRADE_PORT					80	
 
-
 #define		DEVELOPER_ID					"100001"		//developerId
 #define		TM_SIGNKEY						"ac6d97e67b444b7a43edfc9182634786"		//signKey
+*/
+//======================生产平台=======================================
+#define  	HTTP_TRADE_ADDERR   			"http://smw.weifrom.com"
+#define 	HTTP_TRADE_PORT					12012	
+
+#define		DEVELOPER_ID					"100121"		//developerId
+#define		TM_SIGNKEY						"yt587o3rya1xbsxuduosbir4xuztsr0t"		//signKey
+
+
+
 
 #define	TermModel			"KNS260"			//终端型号
-#define	Version				"V2.01.021"			//软件版本 
+#define	Version				"V2.01.024"			//软件版本 
 //============中国银联
 #define	CustomerVersion		"太米-WIFI"			//客户版本
 
-#define	VersionDate			"2020-07-01"		//软件版本日期
+#define	VersionDate			"2020-07-06"		//软件版本日期
 
 
 typedef struct

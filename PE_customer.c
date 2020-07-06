@@ -215,7 +215,7 @@ int APP_TradeMainMenu(char* title)
 	};
 	APP_CreateNewMenuByStruct(title,sizeof(MenuStruPar)/sizeof(CMenuItemStru),MenuStruPar,-1);//30*1000
 	APP_AddCurrentMenuOtherFun(MENU_BACK_MAP,NULL,"taimi.clz");
-	APP_AddCurrentMenuOtherFun(MENU_KEY_FUN,(void*)APP_TermMenu,"终端管理");
+	APP_AddCurrentMenuOtherFun(MENU_KEY_FUN,(void*)APP_TermMenu,"功能");
 	return 0;
 }
 

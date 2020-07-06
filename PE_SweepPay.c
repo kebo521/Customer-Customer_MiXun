@@ -415,7 +415,14 @@ int inside_MicroPay(int Errtimes)
 	// 发送接收数据
 	ret = Tcp_SocketData("数据交互",Full_CheckRecv);
 	Tcp_Close(NULL);
-	if(ret) return ret;
+	if(ret) 
+	{
+		if(ret == OPER_RECV_ERR)
+		{
+			APP_ShowTradeMsg("提醒!由于网络问题\n未收到交易结果\n请从手机或终端查询功能\n确定结果!",5000);
+		}
+		return ret;
+	}
 RE_QUERY_ADDER:
 	pCode=PE_GetRecvIdPar("errCode");
 	if(pCode==NULL)
@@ -522,7 +529,10 @@ int MicroPay(char* title)
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
 		if(0==inside_MicroPay(10))
+		{
+			PE_JsonFree(0);
 			continue;
+		}
 		break;
 	}
     DataFree();
@@ -555,7 +565,10 @@ int FixedMicroPay(char* title)
 		}
 		APP_ShowWaitFor(NULL);//STR_NET_LINK_WLAN
 		if(0 == inside_MicroPay(10))
+		{
+			PE_JsonFree(0);
 			continue;
+		}
 		break;
 	}
     DataFree();
@@ -881,8 +894,14 @@ int RefundFlow(char* pTitle)
 		// 发送接收数据
 		ret = Tcp_SocketData("数据交互",Full_CheckRecv);
 		Tcp_Close(NULL);
-		if(ret) break;
-		
+		if(ret)
+		{
+			if(ret == OPER_RECV_ERR)
+			{
+				APP_ShowTradeMsg("提醒!由于网络问题\n未收到退款结果\n请从手机或本机查询功能\n确定退款结果!",5000);
+			}
+			break;
+		}
 		pCode=PE_GetRecvIdPar("errCode");
 		if(pCode==NULL)
 		{
@@ -933,7 +952,14 @@ int ConsumeCard(char* pTitle)
 		// 发送接收数据
 		ret = Tcp_SocketData("数据交互",Full_CheckRecv);
 		Tcp_Close(NULL);
-		if(ret) break;
+		if(ret)
+		{
+			if(ret == OPER_RECV_ERR)
+			{
+				APP_ShowTradeMsg("提醒!由于网络问题\n未收到核销结果\n请从手机确定核销结果!",5000);
+			}
+			break;
+		}
 		pCode=PE_GetRecvIdPar("errCode");
 		if(pCode==NULL)
 		{
@@ -1074,9 +1100,9 @@ int shiftStatV2(char* pTitle)
 								pshow += sprintf(pshow,"%s笔 ",pPar);
 							}
 							pPar=Conv_GetJsonValue(pModule,"amount",NULL);
-							if(pPar)
+							if(pPar != NULL && API_strlen(pPar)>0)
 							{
-								pshow += sprintf(pshow,"%s元",pPar);
+								pshow += sprintf(pshow,"%s",pPar);
 							}
 							*pshow++ = '\n';
 							pModule = pModule->pNext;
@@ -1088,7 +1114,7 @@ int shiftStatV2(char* pTitle)
 						pshow += sprintf(pshow,"总计:%s笔  ",pPar);
 					}
 					pPar=Conv_GetJsonValue(pJsonData,"totalAmount",NULL);
-					if(pPar)
+					if(pPar != NULL && API_strlen(pPar)>0)
 					{
 						pshow += sprintf(pshow,"合计:%s元",pPar);
 					}
@@ -1222,9 +1248,9 @@ int shiftRecordV2(char* pTitle)
 											pshow += sprintf(pshow,"%s笔 ",pPar);
 										}
 										pPar=Conv_GetJsonValue(pModule,"amount",NULL);
-										if(pPar)
+										if(pPar!=NULL && API_strlen(pPar)>0)
 										{
-											pshow += sprintf(pshow,"%s元",pPar);
+											pshow += sprintf(pshow,"%s",pPar);
 										}
 										*pshow++ = '\n';
 										pModule = pModule->pNext;
